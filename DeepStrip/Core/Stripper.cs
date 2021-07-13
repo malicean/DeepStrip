@@ -4,7 +4,7 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
 
-namespace DeepStrip
+namespace DeepStrip.Core
 {
 	internal class Stripper
 	{

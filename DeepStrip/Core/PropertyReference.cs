@@ -1,6 +1,6 @@
 using System;
 
-namespace DeepStrip
+namespace DeepStrip.Core
 {
 	internal readonly struct PropertyReference<TInstance, TRet>
 	{

@@ -5,14 +5,13 @@ namespace DeepStrip
 {
 	internal class Options
 	{
-		[Option('d', "dependencies",
-			Required = false,
-			HelpText = "Directories that contain dependency assemblies")]
+		[Option('d', "dependencies", HelpText = "The directories to find dependency assemblies in")]
 		public IEnumerable<string>? DependencyDirectories { get; set; }
 
-#if DEBUG
-		[Value(0, Required = true)]
-		public string Path { get; set; }
-#endif
+		[Option('i', "input", HelpText = "The file to read from. Defaults to stdin")]
+		public string? InputPath { get; set; }
+
+		[Option('o', "output", HelpText = "The file to output to. Defaults to stdout")]
+		public string? OutputPath { get; set; }
 	}
 }

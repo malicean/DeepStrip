@@ -1,6 +1,6 @@
 using Mono.Cecil;
 
-namespace DeepStrip
+namespace DeepStrip.Core
 {
 	internal static class StripPredicates
 	{

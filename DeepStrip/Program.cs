@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using CommandLine;
+using DeepStrip.Core;
+using DeepStrip.Streams;
 using Mono.Cecil;
 
 namespace DeepStrip
@@ -17,7 +19,7 @@ namespace DeepStrip
 					x.HelpWriter = Console.Error;
 				})
 				.ParseArguments<Options>(args)
-				.MapResult(MainWithOpt, _ => ExitCode.BadArguments);
+				.MapResult(MainWithOpt, _ => ExitCode.InvalidArguments);
 
 		private static ExitCode MainWithOpt(Options opt)
 		{
@@ -25,88 +27,99 @@ namespace DeepStrip
 			try
 #endif
 			{
-
-
-				using var inbuffer = new MemoryStream();
+				Stream input;
 				{
-#if DEBUG
-					using var stdin = new FileStream(opt.Path, FileMode.Open, FileAccess.Read, FileShare.Read);
-#else
-					using var stdin = Console.OpenStandardInput();
-#endif
-					stdin.CopyTo(inbuffer);
-					inbuffer.Position = 0;
-				}
-
-				using var outbuffer = new MemoryStream((int) Math.Min(64 * 1024 * 1024, inbuffer.Length));
-				{
-					var resolver = new DefaultAssemblyResolver();
-					{
-						var include = opt.DependencyDirectories;
-						if (include is not null)
-							foreach (var item in include)
-								resolver.AddSearchDirectory(item);
-					}
-
-					var parameters = new ReaderParameters()
-					{
-						AssemblyResolver = resolver
-					};
-
-					ModuleDefinition module;
-#if !DEBUG
+					var path = opt.InputPath;
 					try
-#endif
 					{
-						module = ModuleDefinition.ReadModule(inbuffer, parameters);
+						input = path is not null
+							? new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)
+							: new BufferedStandardInput();
 					}
-#if !DEBUG
 					catch (Exception e)
 					{
-						Console.Error.WriteLine("Invalid module. " + e);
-
-						return ExitCode.BadModule;
+						return ExitCode.InvalidInput.Error(e);
 					}
-#endif
-
-					using (module)
-					{
-						var stripper = new Stripper(module);
-						stripper.Strip();
-
-#if !DEBUG
-						try
-#endif
-						{
-							module.Write(outbuffer);
-						}
-#if !DEBUG
-						catch (Exception e)
-						{
-							Console.Error.WriteLine("Writing error. " + e);
-
-							return ExitCode.WritingError;
-						}
-#endif
-					}
-
-					outbuffer.Position = 0;
 				}
+
+				using (input)
+				{
+					Stream output;
+                    {
+                    	var path = opt.OutputPath;
+                    	try
+                    	{
+                    		output = path is not null
+                    			? new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.None)
+                    			: new BufferedStandardOutput();
+                    	}
+                    	catch (Exception e)
+                    	{
+                    		return ExitCode.InvalidOutput.Error(e);
+                    	}
+                    }
+
+                    using (output)
+                    {
+                    	var resolver = new DefaultAssemblyResolver();
+                    	{
+                    		var include = opt.DependencyDirectories;
+                    		if (include is not null)
+                    			foreach (var item in include)
+                    				resolver.AddSearchDirectory(item);
+                    	}
+
+                    	var parameters = new ReaderParameters()
+                    	{
+                    		AssemblyResolver = resolver
+                    	};
+
+                    	ModuleDefinition module;
+#if !DEBUG
+                    	try
+#endif
+                    	{
+                    		module = ModuleDefinition.ReadModule(input, parameters);
+                    	}
+#if !DEBUG
+                    	catch (Exception e)
+                    	{
+                    		return ExitCode.InvalidModule.Error(e);
+                    	}
+#endif
+
+                    	using (module)
+                    	{
+                    		var stripper = new Stripper(module);
+                    		stripper.Strip();
+
+#if !DEBUG
+                    		try
+#endif
+                    		{
+                    			module.Write(output);
+                    		}
+#if !DEBUG
+                    		catch (Exception e)
+                    		{
+                    			Console.Error.WriteLine("Writing error. " + e);
+
+                    			return ExitCode.WritingError;
+                    		}
+#endif
+                    	}
 
 #if DEBUG
-				{
-					var i = inbuffer.Length;
-					var o = outbuffer.Length;
-					Console.WriteLine($"{o} / {i} B ({1 - (double) o / i:P0} deflation)");
-				}
-#else
-				{
-					using var stdout = Console.OpenStandardOutput();
-					outbuffer.CopyTo(stdout);
-				}
+	                    {
+	                        var i = input.Length;
+	                        var o = output.Length;
+	                        var deflation = 1 - (double) o / i;
+	                    }
 #endif
+                    }
 
-				return ExitCode.Ok;
+                    return ExitCode.Ok;
+				}
 			}
 #if !DEBUG
 			catch (Exception e)

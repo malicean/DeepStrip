@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DeepStrip
+namespace DeepStrip.Core
 {
 	internal static class Extensions
 	{
