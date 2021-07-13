@@ -1,18 +1,29 @@
-using System;
 using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Mono.Collections.Generic;
 
 namespace DeepStrip.Core
 {
 	internal class Stripper
 	{
-		private static readonly HashSet<string> NamespaceWhitelist = new()
+		private static readonly HashSet<string> AttributeWhitelist = new()
 		{
-			"Microsoft.CodeAnalysis",
-			"System.Diagnostics.CodeAnalysis",
-			"System.Runtime.CompilerServices",
+			"Microsoft.CodeAnalysis.EmbeddedAttribute",
+			"System.Diagnostics.CodeAnalysis.AllowNullAttribute",
+			"System.Diagnostics.CodeAnalysis.DisallowNullAttribute",
+			"System.Diagnostics.CodeAnalysis.DoesNotReturnAttribute",
+			"System.Diagnostics.CodeAnalysis.DoesNotReturnAttribute",
+			"System.Diagnostics.CodeAnalysis.DoesNotReturnIfAttribute",
+			"System.Diagnostics.CodeAnalysis.MaybeNullAttribute",
+			"System.Diagnostics.CodeAnalysis.MaybeNullWhenAttribute",
+			"System.Diagnostics.CodeAnalysis.MemberNotNullAttribute",
+			"System.Diagnostics.CodeAnalysis.MemberNotNullWhenAttribute",
+			"System.Diagnostics.CodeAnalysis.NotNullAttribute",
+			"System.Diagnostics.CodeAnalysis.NotNullWhenAttribute",
+			"System.Runtime.CompilerServices.IsExternalInit",
+			"System.Runtime.CompilerServices.IsReadOnlyAttribute",
+			"System.Runtime.CompilerServices.NullableAttribute",
+			"System.Runtime.CompilerServices.NullableContextAttribute"
 		};
 
 		private readonly ModuleDefinition _module;
@@ -24,13 +35,20 @@ namespace DeepStrip.Core
 
 		public void Strip() => Strip(_module.Types);
 
+		private void Strip(IList<CustomAttribute> attributes) =>
+			attributes.RemoveWhere(x =>
+			{
+				var type = x.AttributeType.Resolve();
+				return StripPredicates.Type(type.Attributes) && !AttributeWhitelist.Contains(type.Namespace);
+			});
+
 		private void Strip(IList<TypeDefinition> types)
 		{
 			for (var i = types.Count - 1; i >= 0; --i)
 			{
 				var type = types[i];
 
-				if (NamespaceWhitelist.Contains(type.Namespace))
+				if (AttributeWhitelist.Contains(type.Namespace))
 					continue;
 
 				if (StripPredicates.Type(type.Attributes))
@@ -39,13 +57,22 @@ namespace DeepStrip.Core
 					continue;
 				}
 
-				type.CustomAttributes.RemoveWhere(x =>
-				{
-					var attr = x.AttributeType.Resolve();
-					return StripPredicates.Type(attr.Attributes) && !NamespaceWhitelist.Contains(attr.Namespace);
-				});
+				Strip(type.CustomAttributes);
 
-				type.Fields.RemoveWhere(x => StripPredicates.Field(x.Attributes));
+				{
+					var fields = type.Fields;
+					for (var j = fields.Count - 1; j >= 0; --j)
+					{
+						var field = fields[j];
+						if (StripPredicates.Field(field.Attributes))
+						{
+							fields.RemoveAt(j);
+							continue;
+						}
+
+						Strip(field.CustomAttributes);
+					}
+				}
 
 				{
 					var getter = new PropertyReference<PropertyDefinition, MethodDefinition?>(
@@ -57,7 +84,16 @@ namespace DeepStrip.Core
 						(x, v) => x.SetMethod = v
 					);
 
-					DualStripper(type, x => x.Properties, getter, setter);
+					var properties = type.Properties;
+					for (var j = properties.Count - 1; j >= 0; --j)
+					{
+						var property = properties[j];
+
+						if (DualStripper(type, property, getter, setter))
+							type.Properties.RemoveAt(j);
+
+						Strip(property.CustomAttributes);
+					}
 				}
 
 				{
@@ -70,7 +106,16 @@ namespace DeepStrip.Core
 						(x, v) => x.RemoveMethod = v
 					);
 
-					DualStripper(type, x => x.Events, add, remove);
+					var events = type.Events;
+					for (var j = events.Count - 1; j >= 0; --j)
+					{
+						var @event = events[j];
+
+						if (DualStripper(type, @event, add, remove))
+							type.Events.RemoveAt(j);
+
+						Strip(@event.CustomAttributes);
+					}
 				}
 
 				{
@@ -85,6 +130,7 @@ namespace DeepStrip.Core
 							continue;
 						}
 
+						Strip(method.CustomAttributes);
 						Gut(method);
 					}
 				}
@@ -98,51 +144,47 @@ namespace DeepStrip.Core
 			}
 		}
 
-		private void DualStripper<T>(TypeDefinition type, Func<TypeDefinition, Collection<T>> collectionGetter,
-			PropertyReference<T, MethodDefinition?> method1, PropertyReference<T, MethodDefinition?> method2)
+		private bool DualStripper<T>(TypeDefinition type, T item, PropertyReference<T, MethodDefinition?> method1,
+			PropertyReference<T, MethodDefinition?> method2)
 		{
-			var collection = collectionGetter(type);
-			for (var i = collection.Count - 1; i >= 0; --i)
+			var bound1 = method1.Bind(item);
+			var bound2 = method2.Bind(item);
+
+			var (first, second) =
+				(new DualMethodData(bound1.Value), new DualMethodData(bound2.Value));
+
+			void Optimize(ref DualMethodData data)
 			{
-				var item = collection[i];
+				var method = data.Method;
+				ref var strip = ref data.Strip;
 
-				var bound1 = method1.Bind(item);
-				var bound2 = method2.Bind(item);
-
-				var (first, second) =
-					(new DualMethodData(bound1.Value), new DualMethodData(bound2.Value));
-
-				void Optimize(ref DualMethodData data)
+				if (method is null)
 				{
-					var method = data.Method;
-					ref var strip = ref data.Strip;
-
-					if (method is null)
-					{
-						strip = true;
-						return;
-					}
-
-					strip = StripPredicates.Method(method.Attributes);
-					if (strip)
-						type.Methods.Remove(method);
-					else
-						Gut(method);
+					strip = true;
+					return;
 				}
 
-				Optimize(ref first);
-				Optimize(ref second);
-
-				if (first.Strip)
-				{
-					if (second.Strip)
-						collection.RemoveAt(i);
-					else
-						bound1.Value = null;
-				}
-				else if (second.Strip)
-					bound2.Value = null;
+				strip = StripPredicates.Method(method.Attributes);
+				if (strip)
+					type.Methods.Remove(method);
+				else
+					Gut(method);
 			}
+
+			Optimize(ref first);
+			Optimize(ref second);
+
+			if (first.Strip)
+			{
+				if (second.Strip)
+					return true;
+				else
+					bound1.Value = null;
+			}
+			else if (second.Strip)
+				bound2.Value = null;
+
+			return false;
 		}
 
 		private void Gut(MethodDefinition method) => method.Body = new MethodBody(method);
