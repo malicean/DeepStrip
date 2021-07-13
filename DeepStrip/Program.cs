@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using CommandLine;
 using DeepStrip.Core;
-using DeepStrip.Streams;
 using Mono.Cecil;
 
 namespace DeepStrip
@@ -27,43 +26,37 @@ namespace DeepStrip
 			try
 #endif
 			{
-				Stream input;
+				FileStream input;
+				try
 				{
-					var path = opt.InputPath;
-					try
-					{
-						input = path is not null
-							? new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)
-							: new BufferedStandardInput();
-					}
-					catch (Exception e)
-					{
-						return ExitCode.InvalidInput.Error(e);
-					}
+					input = new FileStream(opt.InputPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+				}
+				catch (Exception e)
+				{
+					return ExitCode.InvalidInput.Error(e);
 				}
 
 				using (input)
 				{
-					Stream output;
-                    {
-                    	var path = opt.OutputPath;
-                    	try
-                    	{
-                    		output = path is not null
-                    			? new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.None)
-                    			: new BufferedStandardOutput();
-                    	}
-                    	catch (Exception e)
-                    	{
-                    		return ExitCode.InvalidOutput.Error(e);
-                    	}
-                    }
+					FileStream output;
+#if DEBUG
+					try
+#endif
+					{
+						output = new FileStream(opt.OutputPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
+					}
+#if DEBUG
+					catch (Exception e)
+					{
+						return ExitCode.InvalidOutput.Error(e);
+					}
+#endif
 
-                    using (output)
+					using (output)
                     {
                     	var resolver = new DefaultAssemblyResolver();
                     	{
-                    		var include = opt.DependencyDirectories;
+                    		var include = opt.IncludeDirectories;
                     		if (include is not null)
                     			foreach (var item in include)
                     				resolver.AddSearchDirectory(item);
@@ -90,6 +83,8 @@ namespace DeepStrip
 
                     	using (module)
                     	{
+	                        Console.WriteLine(module.Assembly.Name);
+
                     		Members.Strip(module);
 
 #if !DEBUG
@@ -108,13 +103,21 @@ namespace DeepStrip
 #endif
                     	}
 
-#if DEBUG
 	                    {
-	                        var i = input.Length;
-	                        var o = output.Length;
-	                        var deflation = 1 - (double) o / i;
+	                        var len = (i: input.Length, o: output.Length);
+
+	                        string message;
+	                        if (!opt.MachineReadable)
+	                        {
+		                        var mag = (i: len.i.GetMagnitude(), o: len.o.GetMagnitude());
+		                        message =
+			                        $"{mag.o.ScaleNumeric(len.o):F1} {mag.o} / {mag.i.ScaleNumeric(len.i):F1} {mag.i} ({(double) len.o / len.i:P0})";
+	                        }
+	                        else
+		                        message = $"{len.o} / {len.i}";
+
+	                        Console.WriteLine(message);
 	                    }
-#endif
                     }
 
                     return ExitCode.Ok;

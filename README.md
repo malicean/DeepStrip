@@ -3,17 +3,17 @@ DeepStrip is an advanced reference assembly creator. It deletes all members inac
 those of properties and events).
 
 ## Usage
-DeepStrip uses pipes. Simply pipe in the original assembly, and pipe out the reference assembly.
+DeepStrip uses files. Simply provide the path to original assembly (input) and path to the reference assembly (output).
 
 For example, to read `Assembly-CSharp.dll` and output the stripped result to `Assembly-CSharp.stubbed.dll`:
 ```bash
-$ deepstrip < Assembly-CSharp.dll > Assembly-CSharp.stubbed.dll 
+$ deepstrip Assembly-CSharp.dll Assembly-CSharp.stubbed.dll 
 ```
 
-By default, DeepStrip will resolve any dependencies in the current directory or the `bin` directory within the current directory. If those
-directories do not have all of the dependencies, the `--include` or `-i` option can be used:
+By default, DeepStrip will resolve any dependencies in the current directory or the `bin` directory (also within current directory). If
+those directories do not have all of the dependencies, the `--include` or `-i` option can be used:
 ```bash
-$ deepstrip --include h3vr_Data/Managed < Assembly-CSharp.dll > Assembly-CSharp.stubbed.dll
+$ deepstrip --include h3vr_Data/Managed Assembly-CSharp.dll Assembly-CSharp.stubbed.dll
 ```
 
 Use `deepstrip --help` to view all options in a concise manner.
