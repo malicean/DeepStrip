@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Mono.Cecil;
 
 namespace DeepStrip.Core
@@ -11,20 +12,6 @@ namespace DeepStrip.Core
 			for (var i = @this.Count - 1; i >= 0; --i)
 				if (predicate(@this[i]))
 					@this.RemoveAt(i);
-		}
-
-		public static bool InheritsFrom(this TypeDefinition @this, string @base)
-		{
-			var parent = @this.BaseType;
-			while (parent is not null)
-			{
-				if (parent.FullName == @base)
-					return true;
-
-				parent = parent.Resolve().BaseType;
-			}
-
-			return false;
 		}
 	}
 }

@@ -116,7 +116,7 @@ namespace DeepStrip.Core
 				{
 					var method = methods[i];
 
-					if (Predicate(method.Attributes) && !isAttr || !method.IsConstructor)
+					if (Predicate(method.Attributes) && (!isAttr || !method.IsConstructor))
 					{
 						methods.RemoveAt(i);
 						continue;
@@ -129,7 +129,7 @@ namespace DeepStrip.Core
 
 		private static class Types
 		{
-			public static bool Predicate(TypeAttributes attr)
+			private static bool Predicate(TypeAttributes attr)
 			{
 				var masked = attr & TypeAttributes.VisibilityMask;
 				return masked switch
@@ -151,7 +151,7 @@ namespace DeepStrip.Core
 
 					if (Predicate(type.Attributes))
 					{
-						if (!type.InheritsFrom("System.Attribute") || !CustomAttributes.NamespaceWhitelist.Contains(type.Namespace))
+						if (type.BaseType?.FullName != "System.Attribute" || !CustomAttributes.NamespaceWhitelist.Contains(type.Namespace))
 						{
 							types.RemoveAt(i);
 							continue;
@@ -165,7 +165,7 @@ namespace DeepStrip.Core
 					Events.Strip(type.Events, type.Methods);
 					Methods.Strip(type.Methods, isAttr);
 
-					Strip(type.NestedTypes);
+					StripMembersRecursive(type.NestedTypes);
 				}
 			}
 
