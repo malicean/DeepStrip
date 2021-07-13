@@ -90,8 +90,7 @@ namespace DeepStrip
 
                     	using (module)
                     	{
-                    		var stripper = new Stripper(module);
-                    		stripper.Strip();
+                    		Members.Strip(module);
 
 #if !DEBUG
                     		try
