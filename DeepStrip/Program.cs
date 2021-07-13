@@ -42,7 +42,7 @@ namespace DeepStrip
 				{
 					var resolver = new DefaultAssemblyResolver();
 					{
-						var include = opt.IncludeDirectories;
+						var include = opt.DependencyDirectories;
 						if (include is not null)
 							foreach (var item in include)
 								resolver.AddSearchDirectory(item);

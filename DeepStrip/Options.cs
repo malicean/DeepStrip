@@ -5,10 +5,10 @@ namespace DeepStrip
 {
 	internal class Options
 	{
-		[Option('i', "include",
+		[Option('d', "dependencies",
 			Required = false,
 			HelpText = "Directories that contain dependency assemblies")]
-		public IEnumerable<string>? IncludeDirectories { get; set; }
+		public IEnumerable<string>? DependencyDirectories { get; set; }
 
 #if DEBUG
 		[Value(0, Required = true)]
