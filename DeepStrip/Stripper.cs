@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Mono.Cecil.Rocks;
 using Mono.Collections.Generic;
 
 namespace DeepStrip

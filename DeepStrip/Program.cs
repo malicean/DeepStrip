@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using CommandLine;
-using CommandLine.Text;
 using Mono.Cecil;
 
 namespace DeepStrip

@@ -1,6 +1,6 @@
 namespace DeepStrip
 {
-	public enum ExitCode
+	internal enum ExitCode
 	{
 		Ok,
 		InternalError,

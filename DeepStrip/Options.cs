@@ -3,7 +3,7 @@ using CommandLine;
 
 namespace DeepStrip
 {
-	public class Options
+	internal class Options
 	{
 		[Option('i', "include",
 			Required = false,
