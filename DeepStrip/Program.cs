@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using CommandLine;
 using DeepStrip.Core;
 using Mono.Cecil;
@@ -9,18 +9,16 @@ namespace DeepStrip
 {
 	internal static class Program
 	{
-		private static int Main(string[] args) => (int) MainWithEnum(args);
-
-		private static ExitCode MainWithEnum(IEnumerable<string> args) =>
-			new Parser(x =>
+		private static int Main(string[] args) =>
+			(int) new Parser(x =>
 				{
 					x.EnableDashDash = true;
 					x.HelpWriter = Console.Error;
 				})
 				.ParseArguments<Options>(args)
-				.MapResult(MainWithOpt, _ => ExitCode.InvalidArguments);
+				.MapResult(MainParsed, _ => ExitCode.InvalidArguments);
 
-		private static ExitCode MainWithOpt(Options opt)
+		private static ExitCode MainParsed(Options opt)
 		{
 #if !DEBUG
 			try
@@ -81,11 +79,12 @@ namespace DeepStrip
                     	}
 #endif
 
+	                    StripStats stats;
                     	using (module)
                     	{
 	                        Console.WriteLine(module.Assembly.Name);
 
-                    		Members.Strip(module);
+                    		stats = Members.Strip(module);
 
 #if !DEBUG
                     		try
@@ -103,20 +102,26 @@ namespace DeepStrip
 #endif
                     	}
 
-	                    {
+                        {
 	                        var len = (i: input.Length, o: output.Length);
+	                        var mag = (i: len.i.GetMagnitude(), o: len.o.GetMagnitude());
 
-	                        string message;
-	                        if (!opt.MachineReadable)
-	                        {
-		                        var mag = (i: len.i.GetMagnitude(), o: len.o.GetMagnitude());
-		                        message =
-			                        $"{mag.o.ScaleNumeric(len.o):F1} {mag.o} / {mag.i.ScaleNumeric(len.i):F1} {mag.i} ({(double) len.o / len.i:P0})";
-	                        }
-	                        else
-		                        message = $"{len.o} / {len.i}";
+	                        var builder = new StringBuilder()
+		                        .AppendLine()
+		                        .Append("Custom Attributes : ").Append(stats.CustomAttributes).AppendLine()
+		                        .Append("Types             : ").Append(stats.Types).AppendLine()
+		                        .Append("Fields            : ").Append(stats.Fields).AppendLine()
+		                        .Append("Properties        : ").Append(stats.Properties.Both).AppendLine()
+		                        .Append("    Getters       : ").Append(stats.Properties.Method1).AppendLine()
+		                        .Append("    Setters       : ").Append(stats.Properties.Method2).AppendLine()
+		                        .Append("Events            : ").Append(stats.Events.Both).AppendLine()
+		                        .Append("    Adders        : ").Append(stats.Events.Method1).AppendLine()
+		                        .Append("    Removers      : ").Append(stats.Events.Method2).AppendLine()
+		                        .Append("Methods           : ").Append(stats.Methods).AppendLine()
+		                        .AppendLine()
+		                        .AppendFormat("{0:F1} {1} / {2:F1} {3} ({4:P0})", mag.o.ScaleNumeric(len.o), mag.o, mag.i.ScaleNumeric(len.i), mag.i, (double) len.o / len.i);
 
-	                        Console.WriteLine(message);
+	                        Console.WriteLine(builder.ToString());
 	                    }
                     }
 

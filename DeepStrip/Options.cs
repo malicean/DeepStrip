@@ -8,9 +8,6 @@ namespace DeepStrip
 		[Option('i', "include", HelpText = "The directories to find dependency assemblies in")]
 		public IEnumerable<string>? IncludeDirectories { get; set; }
 
-		[Option('m', "machine-readable", HelpText = "Formats file sizes using bytes")]
-		public bool MachineReadable { get; set; }
-
 #pragma warning disable 8618
 		[Value(0, Required = true, MetaName = "INPUT", HelpText = "The file to read from")]
 		public string InputPath { get; set; }
