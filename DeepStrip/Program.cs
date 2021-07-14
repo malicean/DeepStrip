@@ -82,9 +82,10 @@ namespace DeepStrip
 	                    StripStats stats;
                     	using (module)
                     	{
-	                        Console.WriteLine(module.Assembly.Name);
+	                        if (opt.Verbose)
+		                        Console.WriteLine($"Read '{opt.InputPath}': {module.Assembly.Name}");
 
-                    		stats = Members.Strip(module);
+	                        stats = Members.Strip(module);
 
 #if !DEBUG
                     		try
@@ -102,35 +103,8 @@ namespace DeepStrip
 #endif
                     	}
 
-                        {
-	                        var len = (i: input.Length, o: output.Length);
-	                        var mag = (i: len.i.GetMagnitude(), o: len.o.GetMagnitude());
-
-	                        var builder = new StringBuilder()
-		                        .AppendLine()
-		                        .Append("Types                  : ").Append(stats.Types.MemberCount).AppendLine()
-		                        .Append("    Attributes         : ").Append(stats.Types.CustomAttributeCount).AppendLine()
-		                        .Append("    Fields             : ").Append(stats.Fields.MemberCount).AppendLine()
-		                        .Append("        Attributes     : ").Append(stats.Fields.CustomAttributeCount).AppendLine()
-		                        .Append("    Properties         : ").Append(stats.Properties.Both.MemberCount).AppendLine()
-		                        .Append("        Attributes     : ").Append(stats.Properties.Both.CustomAttributeCount).AppendLine()
-		                        .Append("        Getters        : ").Append(stats.Properties.Method1.MemberCount).AppendLine()
-		                        .Append("            Attributes : ").Append(stats.Properties.Method1.CustomAttributeCount).AppendLine()
-		                        .Append("        Setters        : ").Append(stats.Properties.Method2.MemberCount).AppendLine()
-		                        .Append("            Attributes : ").Append(stats.Properties.Method2.CustomAttributeCount).AppendLine()
-		                        .Append("    Events             : ").Append(stats.Events.Both.MemberCount).AppendLine()
-		                        .Append("        Attributes     : ").Append(stats.Events.Both.CustomAttributeCount).AppendLine()
-		                        .Append("        Adders         : ").Append(stats.Events.Method1.MemberCount).AppendLine()
-		                        .Append("            Attributes : ").Append(stats.Events.Method1.CustomAttributeCount).AppendLine()
-		                        .Append("        Removers       : ").Append(stats.Events.Method2.MemberCount).AppendLine()
-		                        .Append("            Attributes : ").Append(stats.Events.Method2.CustomAttributeCount).AppendLine()
-		                        .Append("    Methods            : ").Append(stats.Methods.MemberCount).AppendLine()
-		                        .Append("        Attributes     : ").Append(stats.Methods.CustomAttributeCount).AppendLine()
-		                        .AppendLine()
-		                        .AppendFormat("{0:F1} {1} / {2:F1} {3} ({4:P0})", mag.o.ScaleNumeric(len.o), mag.o, mag.i.ScaleNumeric(len.i), mag.i, (double) len.o / len.i);
-
-	                        Console.WriteLine(builder.ToString());
-	                    }
+                        if (opt.Verbose)
+	                        PrintStatistics((i: input.Length, o: output.Length), stats);
                     }
 
                     return ExitCode.Ok;
@@ -144,6 +118,51 @@ namespace DeepStrip
 				return ExitCode.InternalError;
 			}
 #endif
+		}
+
+		// I know this is really ugly but it works and doesn't require a third party library
+		private static void PrintStatistics((long i, long o) len, StripStats stats)
+		{
+			var mag = (i: len.i.GetMagnitude(), o: len.o.GetMagnitude());
+            var scaled = (i: mag.i.ScaleNumeric(len.i), o: mag.o.ScaleNumeric(len.o));
+            var ratio = 1 - (double) len.o / len.i;
+            var sizes = (i: $"{scaled.i:F1} {mag.i}", o: $"{scaled.o:F1} {mag.o}", ratio: ratio.ToString("P0"));
+            var width = Math.Max(stats.Max.Width(), Math.Max(sizes.i.Length, Math.Max(sizes.o.Length, sizes.ratio.Length)));
+
+            const string headerText = "Statistics";
+            var headerWidth = width + 23 - headerText.Length - 2;
+            var headerLeft = headerWidth / 2;
+
+            var builder = new StringBuilder()
+                .Append("┌────────────────────────").Append('─', width).Append("─┐").AppendLine()
+                .Append("│ ").Append('#', headerLeft).Append(' ').Append(headerText).Append(' ').Append('#', headerWidth - headerLeft).Append(" │").AppendLine()
+                .Append("├────────────────────────").Append('─', width).Append("─┤").AppendLine()
+                .Append("│ Sizes                  ").Append(' ', width).Append(" │").AppendLine()
+                .Append("│ ├── Source ............").AppendPadLeft(sizes.i, width, '.').Append(" │").AppendLine()
+                .Append("│ ├── Result ............").AppendPadLeft(sizes.o, width, '.').Append(" │").AppendLine()
+                .Append("│ └── Truncation Ratio ..").AppendPadLeft(sizes.ratio, width, '.').Append(" │").AppendLine()
+                .Append("│                        ").Append(' ', width).Append(" │").AppendLine()
+                .Append("│ Types .................").AppendPadLeft(stats.Types.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ ├── Attributes ........").AppendPadLeft(stats.Types.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ ├── Fields ............").AppendPadLeft(stats.Fields.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ │   └── Attributes ....").AppendPadLeft(stats.Fields.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ ├── Properties ........").AppendPadLeft(stats.Properties.Both.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ │   ├── Attributes ....").AppendPadLeft(stats.Properties.Both.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ │   ├── Getters .......").AppendPadLeft(stats.Properties.Method1.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ │   │   └── Attributes ").AppendPadLeft(stats.Properties.Method1.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ │   └── Setters .......").AppendPadLeft(stats.Properties.Method2.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ │       └── Attributes ").AppendPadLeft(stats.Properties.Method2.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ ├── Events ............").AppendPadLeft(stats.Events.Both.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ │   ├── Attributes ....").AppendPadLeft(stats.Events.Both.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ │   ├── Adders ........").AppendPadLeft(stats.Events.Method1.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ │   │   └── Attributes ").AppendPadLeft(stats.Events.Method1.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ │   └── Removers ......").AppendPadLeft(stats.Events.Method2.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ │       └── Attributes ").AppendPadLeft(stats.Events.Method2.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ └── Methods ...........").AppendPadLeft(stats.Methods.MemberCount, width).Append(" │").AppendLine()
+                .Append("│     └── Attributes ....").AppendPadLeft(stats.Methods.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("└────────────────────────").Append('─', width).Append("─┘");
+
+            Console.WriteLine(builder.ToString());
 		}
 	}
 }
