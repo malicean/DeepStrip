@@ -9,13 +9,17 @@
         <ToolCommandName>deepstrip</ToolCommandName>
         <PackageOutputPath>./nupkg</PackageOutputPath>
       
-        <Authors>AsheHat</Authors>
+        <Authors>ash-hat</Authors>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/ash-hat/DeepStrip</PackageProjectUrl>
         <RepositoryUrl>https://github.com/ash-hat/DeepStrip.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <Description>Generates a reference assembly from an existing .NET DLL.</Description>
         <PackageTags>reference assembly assemblies cil strip tool</PackageTags>
+      
+        <PackageVersion>1.0.0</PackageVersion>
+        <AssemblyVersion>1.0.0</AssemblyVersion>
+        <FileVersion>1.0.0</FileVersion>
     </PropertyGroup>
 
     <ItemGroup>
