@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -20,7 +21,7 @@ namespace DeepStrip.Core
 
 			private static bool Predicate(CustomAttribute attr) => attr.Constructor is null;
 
-			public static void Strip(IList<CustomAttribute> attributes, ref StripStats stats) => attributes.RemoveWhere(Predicate, ref stats.CustomAttributes);
+			public static void Strip(IList<CustomAttribute> attributes, ref StripStats.MemberStats stats) => attributes.RemoveWhere(Predicate, ref stats.CustomAttributeCount);
 		}
 
 		private static class Fields
@@ -38,7 +39,7 @@ namespace DeepStrip.Core
 			}
 
 			public static void Strip(IList<FieldDefinition> fields, ref StripStats stats) =>
-				fields.RemoveWhere(x => Predicate(x.Attributes), ref stats.Fields);
+				fields.RemoveWhere(x => Predicate(x.Attributes), ref stats.Fields.MemberCount);
 		}
 
 		private static class Properties
@@ -65,7 +66,7 @@ namespace DeepStrip.Core
 					if (DualMethodStrip(property, getter, setter, methods, ref pstats))
 					{
 						properties.RemoveAt(i);
-						++pstats.Both;
+						++pstats.Both.MemberCount;
 					}
 				}
 			}
@@ -98,7 +99,7 @@ namespace DeepStrip.Core
 					if (DualMethodStrip(@event, add, remove, methods, ref estats))
 					{
 						events.RemoveAt(i);
-						++estats.Both;
+						++estats.Both.MemberCount;
 					}
 				}
 			}
@@ -138,7 +139,7 @@ namespace DeepStrip.Core
 						Predicate(method.Attributes))
 					{
 						methods.RemoveAt(i);
-						++stats.Methods;
+						++stats.Methods.MemberCount;
 						continue;
 					}
 
@@ -174,7 +175,7 @@ namespace DeepStrip.Core
 						if (type.BaseType?.FullName != "System.Attribute" || !CustomAttributes.NamespaceWhitelist.Contains(type.Namespace))
 						{
 							types.RemoveAt(i);
-							++stats.Types;
+							++stats.Types.MemberCount;
 							continue;
 						}
 
@@ -194,16 +195,16 @@ namespace DeepStrip.Core
 			{
 				foreach (var type in types)
 				{
-					CustomAttributes.Strip(type.CustomAttributes, ref stats);
+					CustomAttributes.Strip(type.CustomAttributes, ref stats.Types);
 
 					foreach (var field in type.Fields)
-						CustomAttributes.Strip(field.CustomAttributes, ref stats);
+						CustomAttributes.Strip(field.CustomAttributes, ref stats.Fields);
 					foreach (var property in type.Properties)
-						CustomAttributes.Strip(property.CustomAttributes, ref stats);
+						DualMethodAttributeStrip(property, x => x.GetMethod, x => x.SetMethod, x => x.CustomAttributes, ref stats.Properties);
 					foreach (var @event in type.Events)
-						CustomAttributes.Strip(@event.CustomAttributes, ref stats);
+						DualMethodAttributeStrip(@event, x => x.AddMethod, x => x.RemoveMethod, x => x.CustomAttributes, ref stats.Events);
 					foreach (var method in type.Methods)
-						CustomAttributes.Strip(method.CustomAttributes, ref stats);
+						CustomAttributes.Strip(method.CustomAttributes, ref stats.Methods);
 
 					StripAttributesRecursive(type.NestedTypes, ref stats);
 				}
@@ -219,13 +220,24 @@ namespace DeepStrip.Core
 			}
 		}
 
+		private static void DualMethodAttributeStrip<T>(T item, Func<T, MethodDefinition?> method1, Func<T, MethodDefinition?> method2,
+			Func<T, IList<CustomAttribute>> both, ref StripStats.DualMethod stats)
+		{
+			void Optimize(MethodDefinition? method, ref StripStats.MemberStats stats)
+			{
+				if (method is not null)
+					CustomAttributes.Strip(method.CustomAttributes, ref stats);
+			}
+
+			Optimize(method1(item), ref stats.Method1);
+			Optimize(method2(item), ref stats.Method2);
+			CustomAttributes.Strip(both(item), ref stats.Both);
+		}
+
 		private static bool DualMethodStrip<T>(T item, PropertyReference<T, MethodDefinition?> method1,
 			PropertyReference<T, MethodDefinition?> method2, ICollection<MethodDefinition> methods, ref StripStats.DualMethod stats)
 		{
-			var bound1 = method1.Bind(item);
-			var bound2 = method2.Bind(item);
-
-			bool Optimize(PropertyReference<T, MethodDefinition?>.Bound bound, ref uint stats)
+			bool Optimize(PropertyReference<T, MethodDefinition?>.Bound bound, ref StripStats.MemberStats stats)
 			{
 				var method = bound.Value;
 				if (method is null)
@@ -235,7 +247,7 @@ namespace DeepStrip.Core
 				{
 					methods.Remove(method);
 					bound.Value = null;
-					++stats;
+					++stats.MemberCount;
 
 					return true;
 				}
@@ -245,7 +257,7 @@ namespace DeepStrip.Core
 			}
 
 			// Yes, this MUST be & and not && because both sides must run
-			return Optimize(bound1, ref stats.Method1) & Optimize(bound2, ref stats.Method2);
+			return Optimize(method1.Bind(item), ref stats.Method1) & Optimize(method2.Bind(item), ref stats.Method2);
 		}
 	}
 }
