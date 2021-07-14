@@ -3,6 +3,12 @@ DeepStrip is an advanced reference assembly creator. It deletes all members inac
 deletes all method bodies (including those of properties and events). Member deletion is done intelligently as to be compatible with
 syntax-sugar C# features such as nullable reference types, init only setters, etc.
 
+## Installation
+Install DeepStrip via .NET CLI:
+```bash
+$ dotnet tool install --global DeepStrip
+```
+
 ## Usage
 DeepStrip uses files. Simply provide the path to original assembly (input) and path to the reference assembly (output).
 
