@@ -17,53 +17,53 @@ dotnet tool update --global DeepStrip
 ## Usage
 DeepStrip uses files. Simply provide the path to original assembly (input) and path to the reference assembly (output).
 
-For example, to read `Assembly-CSharp.dll` and output the stripped result to `Assembly-CSharp.stubbed.dll`:
+For example, to read `Assembly-CSharp.dll` and output the stripped result to `Assembly-CSharp.stripped.dll`:
 ```bash
-deepstrip Assembly-CSharp.dll Assembly-CSharp.stubbed.dll 
+deepstrip Assembly-CSharp.dll Assembly-CSharp.stripped.dll 
 ```
 
 By default, DeepStrip will resolve any dependencies in the current directory or the `bin` directory (also within current directory). If
 those directories do not have all of the dependencies, the `--include` or `-i` option can be used:
 ```bash
-deepstrip Assembly-CSharp.dll Assembly-CSharp.stubbed.dll --include "$PATH_TO_MANAGED_DIR"
+deepstrip Assembly-CSharp.dll Assembly-CSharp.stripped.dll --include "$PATH_TO_MANAGED_DIR"
 ```
 *Note: due to [a bug in CommandLineParser](https://github.com/commandlineparser/commandline/issues/605), the include option must come after the input/output.*
 
 DeepStrip runs quiet to prevent console spam in scripts, but verbose mode can be helpful when running manually. Simply set the `--verbose`
 or `-v` flag:
 ```bash
-deepstrip --verbose UnityEngine.dll UnityEngine.stubbed.dll
+deepstrip --verbose UnityEngine.dll UnityEngine.stripped.dll
 ```
 Which produces the following output:
 ```
 Read 'UnityEngine.dll': UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-┌──────────────────────────────────┐
-│ ########## Statistics ########## │
-├──────────────────────────────────┤
-│ Sizes                            │
-│ ├── Source ............. 1.3 MiB │
-│ ├── Result ............547.0 KiB │
-│ └── Truncation Ratio ....... 60% │
-│                                  │
-│ Types ...................... 182 │
-│ ├── Attributes ............. 134 │
-│ ├── Fields ................. 859 │
-│ │   └── Attributes ........... 0 │
-│ ├── Properties .............. 84 │
-│ │   ├── Attributes .......... 17 │
-│ │   ├── Getters ............. 84 │
-│ │   │   └── Attributes .... 1378 │
-│ │   └── Setters ............. 70 │
-│ │       └── Attributes ..... 939 │
-│ ├── Events ................... 3 │
-│ │   ├── Attributes ........... 0 │
-│ │   ├── Adders ............... 3 │
-│ │   │   └── Attributes ....... 0 │
-│ │   └── Removers ............. 3 │
-│ │       └── Attributes ....... 0 │
-│ └── Methods ............... 2843 │
-│     └── Attributes ......... 980 │
-└──────────────────────────────────┘
+┌───────────────────────────────────┐
+│ ########## Statistics ########### │
+├───────────────────────────────────┤
+│ Sizes                             │
+│ ├── Source .............. 1.3 MiB │
+│ ├── Result ............ 547.0 KiB │
+│ └── Truncation Ratio ........ 60% │
+│                                   │
+│ Types ....................... 182 │
+│ ├── Attributes .............. 134 │
+│ ├── Fields .................. 859 │
+│ │   └── Attributes ............ 0 │
+│ ├── Properties ............... 84 │
+│ │   ├── Attributes ........... 17 │
+│ │   ├── Getters .............. 84 │
+│ │   │   └── Attributes ..... 1378 │
+│ │   └── Setters .............. 70 │
+│ │       └── Attributes ...... 939 │
+│ ├── Events .................... 3 │
+│ │   ├── Attributes ............ 0 │
+│ │   ├── Adders ................ 3 │
+│ │   │   └── Attributes ........ 0 │
+│ │   └── Removers .............. 3 │
+│ │       └── Attributes ........ 0 │
+│ └── Methods ................ 2843 │
+│     └── Attributes .......... 980 │
+└───────────────────────────────────┘
 ```
 
 Use `deepstrip --help` to view all options in a concise manner.
