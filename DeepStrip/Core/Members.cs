@@ -18,7 +18,7 @@ namespace DeepStrip.Core
 				"System.Runtime.CompilerServices"
 			};
 
-			private static bool Predicate(CustomAttribute attr) => attr.Constructor is null;
+			private static bool Predicate(CustomAttribute attr) => attr.Constructor?.Module is null;
 
 			public static void Strip(IList<CustomAttribute> attributes, ref StripStats.MemberStats stats) => attributes.RemoveWhere(Predicate, ref stats.CustomAttributeCount);
 		}
