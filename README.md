@@ -6,7 +6,7 @@ syntax-sugar C# features such as nullable reference types, init only setters, et
 ## Installation
 Install DeepStrip via .NET CLI:
 ```bash
-$ dotnet tool install --global DeepStrip
+dotnet tool install --global DeepStrip
 ```
 
 ## Usage
@@ -14,20 +14,20 @@ DeepStrip uses files. Simply provide the path to original assembly (input) and p
 
 For example, to read `Assembly-CSharp.dll` and output the stripped result to `Assembly-CSharp.stubbed.dll`:
 ```bash
-$ deepstrip Assembly-CSharp.dll Assembly-CSharp.stubbed.dll 
+deepstrip Assembly-CSharp.dll Assembly-CSharp.stubbed.dll 
 ```
 
 By default, DeepStrip will resolve any dependencies in the current directory or the `bin` directory (also within current directory). If
 those directories do not have all of the dependencies, the `--include` or `-i` option can be used:
 ```bash
-$ deepstrip Assembly-CSharp.dll Assembly-CSharp.stubbed.dll --include "$PATH_TO_MANAGED_DIR"
+deepstrip Assembly-CSharp.dll Assembly-CSharp.stubbed.dll --include "$PATH_TO_MANAGED_DIR"
 ```
 *Note: due to [a bug in CommandLineParser](https://github.com/commandlineparser/commandline/issues/605), the include option must come after the input/output.*
 
 DeepStrip runs quiet to prevent console spam in scripts, but verbose mode can be helpful when running manually. Simply set the `--verbose`
 or `-v` flag:
 ```bash
-$ deepstrip --verbose UnityEngine.dll UnityEngine.stubbed.dll
+deepstrip --verbose UnityEngine.dll UnityEngine.stubbed.dll
 ```
 Which produces the following output:
 ```
