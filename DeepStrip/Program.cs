@@ -127,7 +127,7 @@ namespace DeepStrip
             var scaled = (i: mag.i.ScaleNumeric(len.i), o: mag.o.ScaleNumeric(len.o));
             var ratio = 1 - (double) len.o / len.i;
             var sizes = (i: $"{scaled.i:F1} {mag.i}", o: $"{scaled.o:F1} {mag.o}", ratio: ratio.ToString("P0"));
-            var width = Math.Max(stats.Max.Width(), Math.Max(sizes.i.Length, Math.Max(sizes.o.Length, sizes.ratio.Length)));
+            var width = 1 + Math.Max(stats.Max.Width(), Math.Max(sizes.i.Length, Math.Max(sizes.o.Length, sizes.ratio.Length)));
 
             const string headerText = "Statistics";
             var headerWidth = width + 23 - headerText.Length - 2;
@@ -138,9 +138,9 @@ namespace DeepStrip
                 .Append("│ ").Append('#', headerLeft).Append(' ').Append(headerText).Append(' ').Append('#', headerWidth - headerLeft).Append(" │").AppendLine()
                 .Append("├────────────────────────").Append('─', width).Append("─┤").AppendLine()
                 .Append("│ Sizes                  ").Append(' ', width).Append(" │").AppendLine()
-                .Append("│ ├── Source ............").AppendPadLeft(sizes.i, width, '.').Append(" │").AppendLine()
-                .Append("│ ├── Result ............").AppendPadLeft(sizes.o, width, '.').Append(" │").AppendLine()
-                .Append("│ └── Truncation Ratio ..").AppendPadLeft(sizes.ratio, width, '.').Append(" │").AppendLine()
+                .Append("│ ├── Source ............").AppendPadLeft(sizes.i, width).Append(" │").AppendLine()
+                .Append("│ ├── Result ............").AppendPadLeft(sizes.o, width).Append(" │").AppendLine()
+                .Append("│ └── Truncation Ratio ..").AppendPadLeft(sizes.ratio, width).Append(" │").AppendLine()
                 .Append("│                        ").Append(' ', width).Append(" │").AppendLine()
                 .Append("│ Types .................").AppendPadLeft(stats.Types.MemberCount, width).Append(" │").AppendLine()
                 .Append("│ ├── Attributes ........").AppendPadLeft(stats.Types.CustomAttributeCount, width).Append(" │").AppendLine()
