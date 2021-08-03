@@ -9,6 +9,11 @@ Install DeepStrip via .NET CLI:
 dotnet tool install --global DeepStrip
 ```
 
+Update it similarly:
+```bash
+dotnet tool update --global DeepStrip
+```
+
 ## Usage
 DeepStrip uses files. Simply provide the path to original assembly (input) and path to the reference assembly (output).
 
