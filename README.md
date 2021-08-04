@@ -37,33 +37,34 @@ deepstrip --verbose UnityEngine.dll UnityEngine.stripped.dll
 Which produces the following output:
 ```
 Read 'UnityEngine.dll': UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-┌───────────────────────────────────┐
-│ ########## Statistics ########### │
-├───────────────────────────────────┤
-│ Sizes                             │
-│ ├── Source .............. 1.3 MiB │
-│ ├── Result ............ 547.0 KiB │
-│ └── Truncation Ratio ........ 60% │
-│                                   │
-│ Types ....................... 182 │
-│ ├── Attributes .............. 134 │
-│ ├── Fields .................. 859 │
-│ │   └── Attributes ............ 0 │
-│ ├── Properties ............... 84 │
-│ │   ├── Attributes ........... 17 │
-│ │   ├── Getters .............. 84 │
-│ │   │   └── Attributes ..... 1378 │
-│ │   └── Setters .............. 70 │
-│ │       └── Attributes ...... 939 │
-│ ├── Events .................... 3 │
-│ │   ├── Attributes ............ 0 │
-│ │   ├── Adders ................ 3 │
-│ │   │   └── Attributes ........ 0 │
-│ │   └── Removers .............. 3 │
-│ │       └── Attributes ........ 0 │
-│ └── Methods ................ 2843 │
-│     └── Attributes .......... 980 │
-└───────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ ############## Statistics ############## │
+├──────────────────────────────────────────┤
+│ Sizes                                    │
+│ ├── Source ..................... 1.3 MiB │
+│ ├── Result ................... 547.0 KiB │
+│ └── Truncation Ratio ............... 60% │
+│                                          │
+│ Types .............................. 182 │
+| ├── Interface Implementations ........ 1 │
+│ ├── Attributes ..................... 134 │
+│ ├── Fields ......................... 859 │
+│ │   └── Attributes ................... 0 │
+│ ├── Properties ...................... 84 │
+│ │   ├── Attributes .................. 17 │
+│ │   ├── Getters ..................... 84 │
+│ │   │   └── Attributes ............ 1378 │
+│ │   └── Setters ..................... 70 │
+│ │       └── Attributes ............. 939 │
+│ ├── Events ........................... 3 │
+│ │   ├── Attributes ................... 0 │
+│ │   ├── Adders ....................... 3 │
+│ │   │   └── Attributes ............... 0 │
+│ │   └── Removers ..................... 3 │
+│ │       └── Attributes ............... 0 │
+│ └── Methods ....................... 2843 │
+│     └── Attributes ................. 980 │
+└──────────────────────────────────────────┘
 ```
 
 Use `deepstrip --help` to view all options in a concise manner.
