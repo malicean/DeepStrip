@@ -130,37 +130,39 @@ namespace DeepStrip
             var width = 1 + Math.Max(stats.Max.Width(), Math.Max(sizes.i.Length, Math.Max(sizes.o.Length, sizes.ratio.Length)));
 
             const string headerText = "Statistics";
-            var headerWidth = width + 23 - headerText.Length - 2;
+            const int namePadding = 30;
+            var headerWidth = width + namePadding - headerText.Length - 2;
             var headerLeft = headerWidth / 2;
 
             var builder = new StringBuilder()
-                .Append("┌────────────────────────").Append('─', width).Append("─┐").AppendLine()
+                .Append("┌───────────────────────────────").Append('─', width).Append("─┐").AppendLine()
                 .Append("│ ").Append('#', headerLeft).Append(' ').Append(headerText).Append(' ').Append('#', headerWidth - headerLeft).Append(" │").AppendLine()
-                .Append("├────────────────────────").Append('─', width).Append("─┤").AppendLine()
-                .Append("│ Sizes                  ").Append(' ', width).Append(" │").AppendLine()
-                .Append("│ ├── Source ............").AppendPadLeft(sizes.i, width).Append(" │").AppendLine()
-                .Append("│ ├── Result ............").AppendPadLeft(sizes.o, width).Append(" │").AppendLine()
-                .Append("│ └── Truncation Ratio ..").AppendPadLeft(sizes.ratio, width).Append(" │").AppendLine()
-                .Append("│                        ").Append(' ', width).Append(" │").AppendLine()
-                .Append("│ Types .................").AppendPadLeft(stats.Types.MemberCount, width).Append(" │").AppendLine()
-                .Append("│ ├── Attributes ........").AppendPadLeft(stats.Types.CustomAttributeCount, width).Append(" │").AppendLine()
-                .Append("│ ├── Fields ............").AppendPadLeft(stats.Fields.MemberCount, width).Append(" │").AppendLine()
-                .Append("│ │   └── Attributes ....").AppendPadLeft(stats.Fields.CustomAttributeCount, width).Append(" │").AppendLine()
-                .Append("│ ├── Properties ........").AppendPadLeft(stats.Properties.Both.MemberCount, width).Append(" │").AppendLine()
-                .Append("│ │   ├── Attributes ....").AppendPadLeft(stats.Properties.Both.CustomAttributeCount, width).Append(" │").AppendLine()
-                .Append("│ │   ├── Getters .......").AppendPadLeft(stats.Properties.Method1.MemberCount, width).Append(" │").AppendLine()
-                .Append("│ │   │   └── Attributes ").AppendPadLeft(stats.Properties.Method1.CustomAttributeCount, width).Append(" │").AppendLine()
-                .Append("│ │   └── Setters .......").AppendPadLeft(stats.Properties.Method2.MemberCount, width).Append(" │").AppendLine()
-                .Append("│ │       └── Attributes ").AppendPadLeft(stats.Properties.Method2.CustomAttributeCount, width).Append(" │").AppendLine()
-                .Append("│ ├── Events ............").AppendPadLeft(stats.Events.Both.MemberCount, width).Append(" │").AppendLine()
-                .Append("│ │   ├── Attributes ....").AppendPadLeft(stats.Events.Both.CustomAttributeCount, width).Append(" │").AppendLine()
-                .Append("│ │   ├── Adders ........").AppendPadLeft(stats.Events.Method1.MemberCount, width).Append(" │").AppendLine()
-                .Append("│ │   │   └── Attributes ").AppendPadLeft(stats.Events.Method1.CustomAttributeCount, width).Append(" │").AppendLine()
-                .Append("│ │   └── Removers ......").AppendPadLeft(stats.Events.Method2.MemberCount, width).Append(" │").AppendLine()
-                .Append("│ │       └── Attributes ").AppendPadLeft(stats.Events.Method2.CustomAttributeCount, width).Append(" │").AppendLine()
-                .Append("│ └── Methods ...........").AppendPadLeft(stats.Methods.MemberCount, width).Append(" │").AppendLine()
-                .Append("│     └── Attributes ....").AppendPadLeft(stats.Methods.CustomAttributeCount, width).Append(" │").AppendLine()
-                .Append("└────────────────────────").Append('─', width).Append("─┘");
+                .Append("├───────────────────────────────").Append('─', width).Append("─┤").AppendLine()
+                .Append("│ Sizes                         ").Append(' ', width).Append(" │").AppendLine()
+                .Append("│ ├── Source ...................").AppendPadLeft(sizes.i, width).Append(" │").AppendLine()
+                .Append("│ ├── Result ...................").AppendPadLeft(sizes.o, width).Append(" │").AppendLine()
+                .Append("│ └── Truncation Ratio .........").AppendPadLeft(sizes.ratio, width).Append(" │").AppendLine()
+                .Append("│                               ").Append(' ', width).Append(" │").AppendLine()
+                .Append("│ Types ........................").AppendPadLeft(stats.Types.Members.MemberCount, width).Append(" │").AppendLine()
+                .Append("| ├── Interface Implementations ").AppendPadLeft(stats.Types.InterfaceImplementations, width).Append(" │").AppendLine()
+                .Append("│ ├── Attributes ...............").AppendPadLeft(stats.Types.Members.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ ├── Fields ...................").AppendPadLeft(stats.Fields.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ │   └── Attributes ...........").AppendPadLeft(stats.Fields.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ ├── Properties ...............").AppendPadLeft(stats.Properties.Both.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ │   ├── Attributes ...........").AppendPadLeft(stats.Properties.Both.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ │   ├── Getters ..............").AppendPadLeft(stats.Properties.Method1.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ │   │   └── Attributes .......").AppendPadLeft(stats.Properties.Method1.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ │   └── Setters ..............").AppendPadLeft(stats.Properties.Method2.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ │       └── Attributes .......").AppendPadLeft(stats.Properties.Method2.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ ├── Events ...................").AppendPadLeft(stats.Events.Both.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ │   ├── Attributes ...........").AppendPadLeft(stats.Events.Both.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ │   ├── Adders ...............").AppendPadLeft(stats.Events.Method1.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ │   │   └── Attributes .......").AppendPadLeft(stats.Events.Method1.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ │   └── Removers .............").AppendPadLeft(stats.Events.Method2.MemberCount, width).Append(" │").AppendLine()
+                .Append("│ │       └── Attributes .......").AppendPadLeft(stats.Events.Method2.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("│ └── Methods ..................").AppendPadLeft(stats.Methods.MemberCount, width).Append(" │").AppendLine()
+                .Append("│     └── Attributes ...........").AppendPadLeft(stats.Methods.CustomAttributeCount, width).Append(" │").AppendLine()
+                .Append("└───────────────────────────────").Append('─', width).Append("─┘");
 
             Console.WriteLine(builder.ToString());
 		}

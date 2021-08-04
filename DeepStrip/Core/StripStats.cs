@@ -4,7 +4,7 @@ namespace DeepStrip.Core
 {
 	internal ref struct StripStats
 	{
-		public MemberStats Types;
+		public TypeStats Types;
 		public MemberStats Fields;
 		public DualMethod Properties;
 		public DualMethod Events;
@@ -27,6 +27,14 @@ namespace DeepStrip.Core
 			public int CustomAttributeCount;
 
 			public int Max => Math.Max(MemberCount, CustomAttributeCount);
+		}
+
+		public struct TypeStats
+		{
+			public MemberStats Members;
+			public int InterfaceImplementations;
+
+			public int Max => Math.Max(Members.MemberCount, InterfaceImplementations);
 		}
 	}
 }

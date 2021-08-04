@@ -120,7 +120,7 @@ namespace DeepStrip.Core
 
 			public static void Gut(MethodDefinition method) => method.Body = new MethodBody(method);
 
-			public static void Strip(IList<MethodDefinition> methods, bool isAttr, ref StripStats stats)
+			public static void Strip(IList<MethodDefinition> methods, ref StripStats stats)
 			{
 				const MethodSemanticsAttributes ignoreSemantics =
 					MethodSemanticsAttributes.AddOn |
@@ -132,10 +132,7 @@ namespace DeepStrip.Core
 				{
 					var method = methods[i];
 
-					if (
-						(!isAttr || !method.IsConstructor) &&
-						(method.SemanticsAttributes & ignoreSemantics) == MethodSemanticsAttributes.None &&
-						Predicate(method.Attributes))
+					if ((method.SemanticsAttributes & ignoreSemantics) == MethodSemanticsAttributes.None && Predicate(method.Attributes))
 					{
 						methods.RemoveAt(i);
 						++stats.Methods.MemberCount;
@@ -162,39 +159,36 @@ namespace DeepStrip.Core
 				};
 			}
 
-			private static void StripMembersRecursive(IList<TypeDefinition> types, ref StripStats stats)
+			private static void StripRecursiveFirst(IList<TypeDefinition> types, ref StripStats stats)
 			{
 				for (var i = types.Count - 1; i >= 0; --i)
 				{
 					var type = types[i];
-					var isAttr = false;
 
-					if (Predicate(type.Attributes))
+					if (Predicate(type.Attributes) &&
+					    (type.BaseType?.FullName != "System.Attribute" || !CustomAttributes.NamespaceWhitelist.Contains(type.Namespace)))
 					{
-						if (type.BaseType?.FullName != "System.Attribute" || !CustomAttributes.NamespaceWhitelist.Contains(type.Namespace))
-						{
-							types.RemoveAt(i);
-							++stats.Types.MemberCount;
-							continue;
-						}
-
-						isAttr = true;
+						types.RemoveAt(i);
+						++stats.Types.Members.MemberCount;
+						continue;
 					}
 
 					Fields.Strip(type.Fields, ref stats);
 					Properties.Strip(type.Properties, type.Methods, ref stats);
 					Events.Strip(type.Events, type.Methods, ref stats);
-					Methods.Strip(type.Methods, isAttr, ref stats);
+					Methods.Strip(type.Methods, ref stats);
 
-					StripMembersRecursive(type.NestedTypes, ref stats);
+					StripRecursiveFirst(type.NestedTypes, ref stats);
 				}
 			}
 
-			private static void StripAttributesRecursive(IEnumerable<TypeDefinition> types, ref StripStats stats)
+			private static void StripRecursiveSecond(IEnumerable<TypeDefinition> types, ref StripStats stats)
 			{
 				foreach (var type in types)
 				{
-					CustomAttributes.Strip(type.CustomAttributes, ref stats.Types);
+					type.Interfaces.RemoveWhere(x => x.InterfaceType.Module is null, ref stats.Types.InterfaceImplementations);
+
+					CustomAttributes.Strip(type.CustomAttributes, ref stats.Types.Members);
 
 					foreach (var field in type.Fields)
 						CustomAttributes.Strip(field.CustomAttributes, ref stats.Fields);
@@ -205,15 +199,15 @@ namespace DeepStrip.Core
 					foreach (var method in type.Methods)
 						CustomAttributes.Strip(method.CustomAttributes, ref stats.Methods);
 
-					StripAttributesRecursive(type.NestedTypes, ref stats);
+					StripRecursiveSecond(type.NestedTypes, ref stats);
 				}
 			}
 
 			public static StripStats Strip(IList<TypeDefinition> types)
 			{
 				var stats = new StripStats();
-				StripMembersRecursive(types, ref stats);
-				StripAttributesRecursive(types, ref stats);
+				StripRecursiveFirst(types, ref stats);
+				StripRecursiveSecond(types, ref stats);
 
 				return stats;
 			}
