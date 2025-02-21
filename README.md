@@ -1,3 +1,7 @@
+**This project has moved!** See [my sourcehut](https://git.sr.ht/~malicean/DeepStrip) for any future updates.
+
+---
+
 # DeepStrip
 DeepStrip is an advanced reference assembly creator. It deletes all members inaccessible to other assemblies. From those members, it
 deletes all method bodies (including those of properties and events). Member deletion is done intelligently as to be compatible with
@@ -19,7 +23,7 @@ DeepStrip uses files. Simply provide the path to original assembly (input) and p
 
 For example, to read `Assembly-CSharp.dll` and output the stripped result to `Assembly-CSharp.stripped.dll`:
 ```bash
-deepstrip Assembly-CSharp.dll Assembly-CSharp.stripped.dll 
+deepstrip Assembly-CSharp.dll Assembly-CSharp.stripped.dll
 ```
 
 By default, DeepStrip will resolve any dependencies in the current directory or the `bin` directory (also within current directory). If
